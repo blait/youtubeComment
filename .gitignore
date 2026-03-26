@@ -18,5 +18,8 @@ classification_results.json
 classification_output.csv
 dashboard.html
 
+# AWS 배포 출력
+aws-deploy-output.md
+
 # Secrets / API keys
 .env

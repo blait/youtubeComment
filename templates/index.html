@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Comment Analyzer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; }
+
+.container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+h1 { text-align: center; font-size: 28px; padding: 24px 0 8px; color: #fff; }
+.subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 40px; }
+
+/* Form */
+.form-section { background: #1a1d27; border-radius: 12px; padding: 28px; margin-bottom: 32px; }
+.form-section h2 { font-size: 18px; margin-bottom: 20px; color: #ccc; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 13px; color: #aaa; font-weight: 500; }
+.form-group input, .form-group textarea {
+    background: #12141c; border: 1px solid #2a2d3a; border-radius: 8px;
+    padding: 10px 14px; color: #e0e0e0; font-size: 14px; font-family: inherit;
+    transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group textarea:focus {
+    outline: none; border-color: #60a5fa;
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.checkbox-group input[type="checkbox"] { width: 16px; height: 16px; accent-color: #60a5fa; }
+.checkbox-group label { font-size: 13px; color: #aaa; cursor: pointer; }
+
+.btn-row { display: flex; justify-content: flex-end; margin-top: 20px; }
+.btn-primary {
+    background: #3b82f6; color: #fff; border: none; border-radius: 8px;
+    padding: 12px 28px; font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-primary:hover { background: #2563eb; }
+.btn-primary:disabled { background: #374151; color: #666; cursor: not-allowed; }
+
+/* Progress */
+.progress-section { background: #1a1d27; border-radius: 12px; padding: 24px; margin-bottom: 32px; display: none; }
+.progress-section h2 { font-size: 16px; margin-bottom: 12px; color: #ccc; }
+.log-box {
+    background: #0a0c10; border-radius: 8px; padding: 16px;
+    font-family: 'SF Mono','Menlo','Monaco',monospace; font-size: 12px;
+    color: #9ca3af; line-height: 1.8; max-height: 400px; overflow-y: auto;
+}
+.log-box .log-line { white-space: pre-wrap; word-break: break-all; }
+.log-box .log-line.highlight { color: #4ade80; font-weight: 600; }
+.log-box .log-line.error { color: #f87171; }
+.dashboard-link {
+    display: inline-block; margin-top: 16px; padding: 10px 24px;
+    background: #059669; color: #fff; border-radius: 8px;
+    text-decoration: none; font-weight: 600; font-size: 14px;
+    transition: background 0.2s;
+}
+.dashboard-link:hover { background: #047857; }
+
+/* Games list */
+.games-section { margin-top: 40px; }
+.games-section h2 { font-size: 18px; margin-bottom: 20px; color: #ccc; }
+.games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.game-card {
+    background: #1a1d27; border-radius: 12px; padding: 20px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.game-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.game-card h3 { font-size: 16px; color: #fff; margin-bottom: 4px; }
+.game-card .game-en { font-size: 13px; color: #888; margin-bottom: 8px; }
+.game-card .game-meta { font-size: 12px; color: #666; margin-bottom: 12px; }
+.game-card a {
+    display: inline-block; padding: 6px 16px;
+    background: #1e3a5f; color: #60a5fa; border-radius: 6px;
+    text-decoration: none; font-size: 13px; font-weight: 500;
+    transition: background 0.2s;
+}
+.game-card a:hover { background: #1e4a7f; }
+.no-games { color: #555; font-size: 14px; }
+
+@media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .container { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>YouTube Comment Analyzer</h1>
+    <p class="subtitle">게임 유튜브 댓글 수집 + AI 감성 분석 대시보드</p>
+
+    <!-- Input Form -->
+    <div class="form-section">
+        <h2>분석 설정</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="gameKo">게임명 (한국어)</label>
+                <input type="text" id="gameKo" placeholder="붉은사막">
+            </div>
+            <div class="form-group">
+                <label for="gameEn">게임명 (영어)</label>
+                <input type="text" id="gameEn" placeholder="Crimson Desert">
+            </div>
+            <div class="form-group">
+                <label for="developer">개발사</label>
+                <input type="text" id="developer" placeholder="Pearl Abyss">
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="testMode">
+                    <label for="testMode">테스트 모드 (댓글 200개 제한)</label>
+                </div>
+            </div>
+            <div class="form-group full">
+                <label for="queries">검색어 (줄바꿈으로 구분)</label>
+                <textarea id="queries" placeholder="붉은사막 리뷰&#10;붉은사막 후기&#10;Crimson Desert review"></textarea>
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn-primary" id="btnRun" onclick="startAnalysis()">분석 시작</button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section" id="progressSection">
+        <h2>진행 상황</h2>
+        <div class="log-box" id="logBox"></div>
+        <div id="dashboardLinkWrap"></div>
+    </div>
+
+    <!-- Previous analyses -->
+    <div class="games-section">
+        <h2>이전 분석 결과</h2>
+        <div class="games-grid" id="gamesGrid">
+            <p class="no-games">로딩 중...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadGames() {
+    fetch('/api/games')
+        .then(r => r.json())
+        .then(games => {
+            const grid = document.getElementById('gamesGrid');
+            if (!games.length) {
+                grid.innerHTML = '<p class="no-games">아직 분석된 게임이 없습니다.</p>';
+                return;
+            }
+            grid.innerHTML = games.map(g => {
+                const date = g.analyzed_at ? new Date(g.analyzed_at).toLocaleString('ko-KR') : '';
+                return `<div class="game-card">
+                    <h3>${esc(g.game_name_ko)}</h3>
+                    <div class="game-en">${esc(g.game_name_en)}${g.developer ? ' / ' + esc(g.developer) : ''}</div>
+                    <div class="game-meta">${date}</div>
+                    <a href="/dashboard/${esc(g.game_id)}" target="_blank">대시보드 보기</a>
+                </div>`;
+            }).join('');
+        })
+        .catch(() => {
+            document.getElementById('gamesGrid').innerHTML =
+                '<p class="no-games">목록을 불러올 수 없습니다.</p>';
+        });
+}
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function startAnalysis() {
+    const gameKo = document.getElementById('gameKo').value.trim();
+    const gameEn = document.getElementById('gameEn').value.trim();
+    const developer = document.getElementById('developer').value.trim();
+    const queries = document.getElementById('queries').value.trim();
+    const testMode = document.getElementById('testMode').checked;
+
+    if (!gameKo || !gameEn) {
+        alert('게임 한국어명과 영어명을 입력해주세요.');
+        return;
+    }
+    if (!queries) {
+        alert('검색어를 입력해주세요.');
+        return;
+    }
+
+    const btn = document.getElementById('btnRun');
+    btn.disabled = true;
+    btn.textContent = '실행 중...';
+
+    const progressSection = document.getElementById('progressSection');
+    const logBox = document.getElementById('logBox');
+    const linkWrap = document.getElementById('dashboardLinkWrap');
+    progressSection.style.display = 'block';
+    logBox.innerHTML = '';
+    linkWrap.innerHTML = '';
+
+    fetch('/api/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            game_name_ko: gameKo,
+            game_name_en: gameEn,
+            developer: developer,
+            queries: queries,
+            test_mode: testMode,
+        }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            addLog(data.error, 'error');
+            btn.disabled = false;
+            btn.textContent = '분석 시작';
+            return;
+        }
+        streamStatus(data.job_id, data.game_id);
+    })
+    .catch(err => {
+        addLog('요청 실패: ' + err, 'error');
+        btn.disabled = false;
+        btn.textContent = '분석 시작';
+    });
+}
+
+function streamStatus(jobId, gameId) {
+    const es = new EventSource('/api/status/' + jobId);
+    const btn = document.getElementById('btnRun');
+    const linkWrap = document.getElementById('dashboardLinkWrap');
+
+    es.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.message) {
+            const isHighlight = data.message.startsWith('===');
+            addLog(data.message, isHighlight ? 'highlight' : '');
+        }
+    };
+
+    es.addEventListener('done', function(e) {
+        es.close();
+        const result = JSON.parse(e.data);
+        btn.disabled = false;
+        btn.textContent = '분석 시작';
+
+        if (result.status === 'completed') {
+            linkWrap.innerHTML = '<a class="dashboard-link" href="/dashboard/' +
+                esc(result.game_id) + '" target="_blank">대시보드 보기</a>';
+            loadGames();
+        } else if (result.error) {
+            addLog('실패: ' + result.error, 'error');
+        }
+    });
+
+    es.onerror = function() {
+        es.close();
+        btn.disabled = false;
+        btn.textContent = '분석 시작';
+        addLog('서버 연결이 끊어졌습니다.', 'error');
+    };
+}
+
+function addLog(msg, cls) {
+    const logBox = document.getElementById('logBox');
+    const line = document.createElement('div');
+    line.className = 'log-line' + (cls ? ' ' + cls : '');
+    line.textContent = msg;
+    logBox.appendChild(line);
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+// 페이지 로드 시 게임 목록 불러오기
+loadGames();
+</script>
+</body>
+</html>

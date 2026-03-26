@@ -1,5 +1,10 @@
 # YouTube Comment Analyzer
 
+<img width="903" height="942" alt="image" src="https://github.com/user-attachments/assets/8ca9da5a-fb29-4e84-9fd6-31baf7112f2a" />
+<img width="890" height="663" alt="image" src="https://github.com/user-attachments/assets/99aa46ae-33b0-422f-997d-223438860ecb" />
+<img width="897" height="952" alt="image" src="https://github.com/user-attachments/assets/01bcad73-392e-464a-85b2-2c147dddd383" />
+
+
 게임 유튜브 댓글을 자동 수집하고 AI(Claude via AWS Bedrock)로 감성 분석하여 인터랙티브 대시보드를 생성하는 파이프라인입니다.
 
 브라우저에서 게임명과 검색어를 입력하면 댓글 수집 → 카테고리 발견 → 감성 분류 → 대시보드 생성까지 자동으로 실행됩니다.
